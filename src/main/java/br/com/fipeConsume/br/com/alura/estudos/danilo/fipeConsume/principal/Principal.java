@@ -1,6 +1,7 @@
 package br.com.fipeConsume.br.com.alura.estudos.danilo.fipeConsume.principal;
 
 import br.com.fipeConsume.br.com.alura.estudos.danilo.fipeConsume.model.Models;
+import br.com.fipeConsume.br.com.alura.estudos.danilo.fipeConsume.model.Vehicle;
 import br.com.fipeConsume.br.com.alura.estudos.danilo.fipeConsume.model.VehicleBrandsData;
 import br.com.fipeConsume.br.com.alura.estudos.danilo.fipeConsume.service.APIConsume;
 import br.com.fipeConsume.br.com.alura.estudos.danilo.fipeConsume.service.JacksonDataConverter;
@@ -53,7 +54,9 @@ public class Principal {
         System.out.println("Informe o código da marca para consulta: ");
         String brandCodeResp = t.nextLine();
 
-        String vehiclePerBrandList = apiConsume.getData(completeURL + "/" + brandCodeResp + "/modelos");
+        completeURL = completeURL + "/" + brandCodeResp + "/modelos";
+
+        String vehiclePerBrandList = apiConsume.getData(completeURL);
         var modelsList = conv.getData(vehiclePerBrandList, Models.class);
 
         System.out.println("Modelos da marca especificada: ");
@@ -62,7 +65,31 @@ public class Principal {
                 .forEach(System.out::println);
 
         System.out.println("Digite um trecho do nome do carro para consulta: ");
-        String carForSearch = t.nextLine();
-        
+        String carForSearch = t.nextLine().trim();
+
+        modelsList.models().stream()
+                .filter(m -> m.name().contains(carForSearch))
+                .sorted(Comparator.comparing(VehicleBrandsData::code))
+                .forEach(System.out::println);
+
+        System.out.println("Digite o código do modelo para consultar valores: ");
+        String carModelCode = t.nextLine();
+        completeURL = completeURL + "/" + carModelCode + "/anos";
+
+
+        var modelPerYearList = apiConsume.getData(completeURL);
+        List<VehicleBrandsData> years = conv.getList(modelPerYearList, VehicleBrandsData.class);
+        List<Vehicle> vehicles = new ArrayList<>();
+
+        for (int i = 0; i < years.size() ; i++) {
+            var urlByYear = completeURL + "/" + years.get(i).code();
+            var json = apiConsume.getData(urlByYear);
+            Vehicle vehicle = conv.getData(json, Vehicle.class);
+            vehicles.add(vehicle);
+        }
+
+        System.out.println("Todos os veículos filtrados por avaliação por ano: ");
+        vehicles.forEach(System.out::println);
+
     }
 }
